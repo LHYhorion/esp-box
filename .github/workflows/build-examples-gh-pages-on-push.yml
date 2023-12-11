@@ -64,7 +64,15 @@ jobs:
           cp ${{matrix.boards}} sdkconfig.defaults
           # idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;${{matrix.boards}}" reconfigure
 
-          if [[ ${{matrix.build-dir}} == chatgpt_demo ]]; then
+          if [[ ${{matrix.build-dir}} == usb_camera_lcd_display ]]; then
+            if [[ ${{matrix.boards}} == sdkconfig.ci.box-3 ]]; then
+              idf.py build
+              cd build
+              esptool.py --chip esp32s3 merge_bin -o "$GITHUB_WORKSPACE/images/${{matrix.build-dir}}_${{matrix.boards}}.bin" @flash_args
+            else
+              echo "Skipping build for ${{matrix.build-dir}} with ${{matrix.boards}}"
+            fi
+          elif [[ ${{matrix.build-dir}} == chatgpt_demo ]]; then
             idf.py build
 
             cd factory_nvs
