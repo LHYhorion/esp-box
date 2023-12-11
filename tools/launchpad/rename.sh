@@ -21,7 +21,7 @@ for file in *; do
     mv "$file" "$newfile"
 
   elif [[ $file == *chatgpt_demo_sdkconfig.ci.box* ]]; then
-    version=$(grep -E "#define CHATGPT_DEMO_VERSION_(MAJOR|MINOR|PATCH)" $var
+    version=$(grep -E "#define CHATGPT_DEMO_VERSION_(MAJOR|MINOR|PATCH)" $var/examples/chatgpt_demo/main/main.h | awk '{print $3}')
     version="${version//[$'\t\r\n ']/}"
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
