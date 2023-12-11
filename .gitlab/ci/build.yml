@@ -133,6 +133,7 @@ build_example_usb_camera_lcd_display:
       - IMAGE: espressif/idf:latest
   variables:
     EXAMPLE_DIR: examples/usb_camera_lcd_display
+    EXAMPLE_CONFIG: sdkconfig.ci.box-3
 
 build_example_usb_headset:
   extends:
