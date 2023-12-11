@@ -118,7 +118,7 @@ for file in *; do
 
     mv "$file" "$newfile"
   elif [[ $file == *matter_switch_sdkconfig.ci.box-3* ]]; then
-    version=$(grep -E "#define MATTER_SWITCH_VERSION_(MAJOR|MINOR|PATCH)" $@/examples/matter_switch/main/main.h | awk '{print $3}')
+    version=$(grep -E "#define MATTER_SWITCH_VERSION_(MAJOR|MINOR|PATCH)" $@/examples/matter_switch/main/app_main.h | awk '{print $3}')
     version="${version//[$'\t\r\n ']/}"
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
@@ -128,7 +128,7 @@ for file in *; do
     mv "$file" "$newfile"
 
   elif [[ $file == *matter_switch_sdkconfig.ci.box-lite* ]]; then
-    version=$(grep -E "#define MATTER_SWITCH_VERSION_(MAJOR|MINOR|PATCH)" $@/examples/matter_switch/main/main.h | awk '{print $3}')
+    version=$(grep -E "#define MATTER_SWITCH_VERSION_(MAJOR|MINOR|PATCH)" $@/examples/matter_switch/main/app_main.h | awk '{print $3}')
     version="${version//[$'\t\r\n ']/}"
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
