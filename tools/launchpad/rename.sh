@@ -6,9 +6,20 @@ for file in *; do
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+    case "$file" in
+      *_sdkconfig.ci.box-3*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box-lite*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+        ;;
+      *)
+        newfile="$file"
+        ;;
+    esac
 
     mv "$file" "$newfile"
   elif [[ $file == *factory_demo_sdkconfig.ci* ]]; then
@@ -17,9 +28,20 @@ for file in *; do
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+    case "$file" in
+      *_sdkconfig.ci.box-3*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box-lite*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+        ;;
+      *)
+        newfile="$file"
+        ;;
+    esac
 
     mv "$file" "$newfile"
   elif [[ $file == *usb_headset_sdkconfig.ci* ]]; then
@@ -28,9 +50,20 @@ for file in *; do
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+    case "$file" in
+      *_sdkconfig.ci.box-3*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box-lite*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+        ;;
+      *)
+        newfile="$file"
+        ;;
+    esac
 
     mv "$file" "$newfile"
   elif [[ $file == *usb_camera_sdkconfig.ci* ]]; then
@@ -39,9 +72,20 @@ for file in *; do
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+    case "$file" in
+      *_sdkconfig.ci.box-3*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box-lite*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+        ;;
+      *)
+        newfile="$file"
+        ;;
+    esac
 
     mv "$file" "$newfile"
   elif [[ $file == *matter_switch_sdkconfig.ci* ]]; then
@@ -50,9 +94,20 @@ for file in *; do
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
-    newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+    case "$file" in
+      *_sdkconfig.ci.box-3*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-3/-ESP-BOX-3-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box-lite*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box-lite/-ESP-BOX-Lite-$version_with_dots/g")
+        ;;
+      *_sdkconfig.ci.box*)
+        newfile=$(echo "$file" | sed "s/_sdkconfig.ci.box/-ESP-BOX-$version_with_dots/g")
+        ;;
+      *)
+        newfile="$file"
+        ;;
+    esac
 
     mv "$file" "$newfile"
   fi
