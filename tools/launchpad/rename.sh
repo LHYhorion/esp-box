@@ -8,7 +8,7 @@ function rename_files() {
   for file in *; do
     if [[ $file == *${file_prefix}* ]]; then
       version=$(grep -E "#define ${version_def}_(MAJOR|MINOR|PATCH)" ${file_path} | awk '{print \$3}')
-      version="${version//[\t\r\n ']/}"
+      version="${version//[$'\t\r\n ']/}"
       version_with_dots=$(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 
       case "$file" in
