@@ -2,7 +2,7 @@
 
 version_with_dots() {
   version=$(grep -E "#define \$1_(MAJOR|MINOR|PATCH)" $@/examples/\$2/main/\$3 | awk '{print \$3}')
-  version="${version//[\t\r\n ']/}"
+  version="${version//[$'\t\r\n ']/}"
   echo $(echo "$version" | sed 's/\(.\)/\1_/g' | sed 's/\_$//')
 }
 
