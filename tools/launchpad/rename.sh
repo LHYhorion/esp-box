@@ -5,7 +5,7 @@ rename_files() {
     local version_cmd="\$2"
 
     version=$(grep -E "$version_cmd" $@/examples/${file%%_*}/main/main.h | awk '{print \$3}')
-    version="${version//[\t\r\n ']/}"
+    version="${version//[$'\t\r\n ']/}"
 
     version_with_dots=$(echo "$version" | sed 's/\(.\)/\1./g' | sed 's/\.$//')
 
