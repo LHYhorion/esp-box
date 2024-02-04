@@ -19,7 +19,6 @@ name: "Build examples to github pages"
 
 on:
   workflow_dispatch:
-     inputs:
   push:
     branches:
       - master
