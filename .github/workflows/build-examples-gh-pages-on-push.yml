@@ -20,18 +20,6 @@ name: "Build examples to github pages"
 on:
   workflow_dispatch:
      inputs:
-      name:
-        type: choice
-        description: Choose Target
-        default: 'all'
-        options:
-        - 'all'
-        - 'esp32'
-        - 'esp32s2'
-        - 'esp32s3'
-        - 'esp32c3'
-        - 'esp32c6'
-        - 'esp32h6'
   push:
     branches:
       - master
