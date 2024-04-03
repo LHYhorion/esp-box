@@ -70,6 +70,8 @@ static float humidity = 0;
 static uint8_t Temp = 0;
 static uint8_t Hum = 0;
 
+bool ir_learning_done = false;
+
 typedef struct {
     ui_sensor_monitor_img_type_t type;
     const char *name;
@@ -245,6 +247,7 @@ esp_err_t ir_learn_save_cfg(char *filepath, struct ir_learn_sub_list_head *cmd_l
         fwrite(rmt_nec_symbols, 1, symbol_num * sizeof(rmt_symbol_word_t), fp);
     }
     fclose(fp);
+    ir_learning_done = true;
 err:
     return ret;
 }

@@ -27,6 +27,8 @@
 #include "bsp_board.h"
 #include "bsp/esp-bsp.h"
 
+#include "app_udp_client.h"
+
 static const char *TAG = "main";
 
 file_iterator_instance_t *file_iterator;
@@ -146,4 +148,6 @@ void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(4 * 1000));
     app_sr_start(false);
     app_rmaker_start();
+
+    app_udp_client_init();
 }
