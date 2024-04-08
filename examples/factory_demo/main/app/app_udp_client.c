@@ -16,22 +16,93 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
-
+#include "esp_vfs_dev.h"
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
-
+#include <arpa/inet.h>
+#include "driver/uart.h"
 #include "app_udp_client.h"
 #include "app_wifi.h"
 
-
 #define HOST_IP_ADDR "192.168.1.141/"
 #define PORT         3333
+#define HOST_IP_SIZE 128
 
 static const char *TAG = "tcp_client";
 
-extern bool ir_learning_done;
+static bool ir_learning_send_on = false;
+static bool ir_learning_send_off = false;
+static const char *payload_on = "OK: learning on";
+static const char *payload_off = "OK: learning off";
+
+esp_err_t example_configure_stdin_stdout(void)
+{
+    static bool configured = false;
+    if (configured) {
+      return ESP_OK;
+    }
+    // Initialize VFS & UART so we can use std::cout/cin
+    setvbuf(stdin, NULL, _IONBF, 0);
+    /* Install UART driver for interrupt-driven reads and writes */
+    ESP_ERROR_CHECK( uart_driver_install( (uart_port_t)CONFIG_ESP_CONSOLE_UART_NUM,
+            256, 0, 0, NULL, 0) );
+    /* Tell VFS to use UART driver */
+    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
+    esp_vfs_dev_uart_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
+    /* Move the caret to the beginning of the next line on '\n' */
+    esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
+    configured = true;
+    return ESP_OK;
+}
+
+
+esp_err_t get_addr_from_stdin(int port, int sock_type, int *ip_protocol, int *addr_family, struct sockaddr_storage *dest_addr)
+{
+    char host_ip[HOST_IP_SIZE];
+    int len;
+    static bool already_init = false;
+
+    // this function could be called multiple times -> make sure UART init runs only once
+    if (!already_init) {
+        example_configure_stdin_stdout();
+        already_init = true;
+    }
+
+    // ignore empty or LF only string (could receive from DUT class)
+    do {
+        fgets(host_ip, HOST_IP_SIZE, stdin);
+        len = strlen(host_ip);
+    } while (len<=1 && host_ip[0] == '\n');
+    host_ip[len - 1] = '\0';
+
+    struct addrinfo hints, *addr_list, *cur;
+    memset( &hints, 0, sizeof( hints ) );
+
+    // run getaddrinfo() to decide on the IP protocol
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = sock_type;
+    hints.ai_protocol = IPPROTO_TCP;
+    if( getaddrinfo( host_ip, NULL, &hints, &addr_list ) != 0 ) {
+        return ESP_FAIL;
+    }
+    for( cur = addr_list; cur != NULL; cur = cur->ai_next ) {
+        memcpy(dest_addr, cur->ai_addr, sizeof(*dest_addr));
+
+    if (cur->ai_family == AF_INET) {
+        *ip_protocol = IPPROTO_IP;
+        *addr_family = AF_INET;
+        // add port number and return on first IPv4 match
+        ((struct sockaddr_in*)dest_addr)->sin_port = htons(port);
+        freeaddrinfo( addr_list );
+        return ESP_OK;
+    }
+    }
+    // no match found
+    freeaddrinfo( addr_list );
+    return ESP_FAIL;
+}
 
 static void udp_client_task(void *pvParameters)
 {
@@ -65,10 +136,32 @@ static void udp_client_task(void *pvParameters)
         timeout.tv_usec = 0;
         setsockopt (sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
 
-        ESP_LOGI(TAG, "Socket created, sending to %s:%d", HOST_IP_ADDR, PORT);
+        ESP_LOGD(TAG, "Socket created, sending to %s:%d", HOST_IP_ADDR, PORT);
 
         while (1) {
-            if(ir_learning_done) {
+            if(ir_learning_send_on) {
+                FILE *fp = NULL;
+                char *ir_file = (char*)heap_caps_calloc(1, 48, MALLOC_CAP_SPIRAM);
+                strncpy(ir_file, "/spiffs/my_learn_on.cfg", 48);
+                fp = fopen(ir_file, "r");
+                if(fp == NULL) {
+                    ESP_LOGE(TAG, "Failed to open file for reading");
+                    break;
+                }
+                uint8_t *ir_on_buffer = (uint8_t*)heap_caps_calloc(1, 1024, MALLOC_CAP_SPIRAM);
+                size_t ir_size = fread(ir_on_buffer, 1, 1024, fp);
+                if(ir_size != 0) {
+                    int err = sendto(sock, ir_on_buffer, 1024, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+                    if (err < 0) {
+                        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                        break;
+                    } else {
+                        ESP_LOGW(TAG, "IR On Buffer done");
+                    }
+                    ir_learning_send_on = false;
+                }
+                fclose(fp);
+            } else if(ir_learning_send_off) {
                 FILE *fp = NULL;
                 char *ir_file = (char*)heap_caps_calloc(1, 48, MALLOC_CAP_SPIRAM);
                 strncpy(ir_file, "/spiffs/my_learn_off.cfg", 48);
@@ -77,22 +170,51 @@ static void udp_client_task(void *pvParameters)
                     ESP_LOGE(TAG, "Failed to open file for reading");
                     break;
                 }
-                uint8_t *ir_buffer = (uint8_t*)heap_caps_calloc(1, 1024, MALLOC_CAP_SPIRAM);
-                size_t ir_size = fread(ir_buffer, 1, 1024, fp);
+                uint8_t *ir_off_buffer = (uint8_t*)heap_caps_calloc(1, 1024, MALLOC_CAP_SPIRAM);
+                size_t ir_size = fread(ir_off_buffer, 1, 1024, fp);
                 if(ir_size != 0) {
-                    int err = sendto(sock, ir_buffer, 1024, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+                    int err = sendto(sock, ir_off_buffer, 1024, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
                     if (err < 0) {
                         ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
                         break;
                     } else {
-                        ESP_LOGW(TAG, "IR Buffer done");
+                        ESP_LOGW(TAG, "IR Off Buffer done");
                     }
-                    ir_learning_done = false;
+                    ir_learning_send_off = false;
                 }
                 fclose(fp);
             }
 
+            struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
+            socklen_t socklen = sizeof(source_addr);
+            int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+
+            // Error occurred during receiving
+            if (len < 0) {
+                ESP_LOGD(TAG, "recvfrom failed: errno %d", errno);
+                break;
+            } else {
+                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+                ESP_LOGW(TAG, "Received %d bytes from %s:", len, host_ip);
+                ESP_LOGW(TAG, "%s", rx_buffer);
+                ESP_LOGW(TAG, "len: %d, payload_on: %d, payload_off: %d", len, strlen(payload_on), strlen(payload_off));
+                if (strncmp(rx_buffer, payload_on, len) == 0) {
+                    ESP_LOGW(TAG, "Received expected message, learning on");
+                    ir_learning_send_off = true;
+                    break;
+                } else if(strncmp(rx_buffer, payload_on, len) == 0) {
+                    ESP_LOGW(TAG, "Received expected message, learning off");
+                    ESP_LOGW(TAG, "IR Learning done");
+                    break;
+                }
+            }
+
             vTaskDelay(2000 / portTICK_PERIOD_MS);
+        }
+        if (sock != -1) {
+            ESP_LOGD(TAG, "Shutting down socket and restarting...");
+            shutdown(sock, 0);
+            close(sock);
         }
     }
     vTaskDelete(NULL);
@@ -101,4 +223,16 @@ static void udp_client_task(void *pvParameters)
 void app_udp_client_init(void)
 {
     xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+}
+
+esp_err_t ir_learning_send_on_set(bool state)
+{
+    ir_learning_send_on = state;
+    return ESP_OK;
+}
+
+esp_err_t ir_learning_send_off_set(bool state)
+{
+    ir_learning_send_off = state;
+    return ESP_OK;
 }

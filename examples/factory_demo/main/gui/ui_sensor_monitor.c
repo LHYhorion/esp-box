@@ -16,12 +16,13 @@
 #include "app_switch.h"
 #include "ui_main.h"
 #include "ui_sensor_monitor.h"
+#include "app_udp_client.h"
 
 #define TEST_MEMORY_LEAK_THRESHOLD      (-400)
 #define IR_RESOLUTION_HZ                1000000 // 1MHz resolution, 1 tick = 1us
 
 #define UPDATE_TIME_PERIOD              300
-#define POWER_ON_PATH                   BSP_SPIFFS_MOUNT_POINT"/my_learn_off.cfg"
+#define POWER_ON_PATH                   BSP_SPIFFS_MOUNT_POINT"/my_learn_on.cfg"
 #define POWER_OFF_PATH                  BSP_SPIFFS_MOUNT_POINT"/my_learn_off.cfg"
 
 #define IR_ERR_CHECK(con, err, format, ...) if (con) { \
@@ -69,8 +70,6 @@ static float temperature = 0;
 static float humidity = 0;
 static uint8_t Temp = 0;
 static uint8_t Hum = 0;
-
-bool ir_learning_done = false;
 
 typedef struct {
     ui_sensor_monitor_img_type_t type;
@@ -247,7 +246,6 @@ esp_err_t ir_learn_save_cfg(char *filepath, struct ir_learn_sub_list_head *cmd_l
         fwrite(rmt_nec_symbols, 1, symbol_num * sizeof(rmt_symbol_word_t), fp);
     }
     fclose(fp);
-    ir_learning_done = true;
 err:
     return ret;
 }
@@ -401,6 +399,8 @@ static void ir_learn_learn_send_callback(ir_learn_state_t state, uint8_t sub_ste
     const sys_param_t *param = settings_get_parameter();
     static uint8_t air_on_ir = 0;
     static uint8_t air_off_ir = 0;
+    static bool ir_learn_on_done = false;
+    static bool ir_learn_off_done = false;
     switch (state) {
     case IR_LEARN_STATE_EXIT:
         ESP_LOGI(TAG, "IR Learn exit");
@@ -460,11 +460,16 @@ static void ir_learn_learn_send_callback(ir_learn_state_t state, uint8_t sub_ste
             esp_err_t ret = ir_learn_read_cfg(POWER_ON_PATH, &ir_leran_read_on);
             if (ret == ESP_OK) {
                 ESP_LOGD(TAG, "air_on ir-data read OK.");
+                ir_learn_on_done = true;
             }
             ir_learn_save_cfg(POWER_OFF_PATH, &ir_leran_data_off);
             ret = ir_learn_read_cfg(POWER_OFF_PATH, &ir_leran_read_off);
             if (ret == ESP_OK) {
                 ESP_LOGD(TAG, "air_off ir-data read OK.");
+                ir_learn_off_done = true;
+            }
+            if(ir_learn_on_done && ir_learn_off_done) {
+                ir_learning_send_on_set(true);
             }
             xEventGroupSetBits(sensor_monitor_event_grp, IR_LEARNING_STATE);
             ir_learn_stop(&ir_learn_handle);

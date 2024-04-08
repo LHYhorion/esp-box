@@ -15,6 +15,10 @@ extern "C" {
 
 void app_udp_client_init(void);
 
+esp_err_t ir_learning_send_on_set(bool state);
+
+esp_err_t ir_learning_send_off_set(bool state);
+
 #ifdef __cplusplus
 }
 #endif
